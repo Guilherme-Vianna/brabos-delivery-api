@@ -20,18 +20,18 @@ database that compose creates.
 
 ## Data model
 
-| Table | Purpose |
-| --- | --- |
-| `establishments` | Owner (`firebase_uid`), `slug`, name, address, phone, CNPJ, colors, auto-accept, delivery fee, minimum order, online payments, logo |
-| `opening_hours` | Weekly hours. `closes_at < opens_at` means the shop closes after midnight |
-| `absences` | Emergency closures. No orders are accepted while one is active |
-| `products` | Name, description, ingredients, category, price, half-and-half, doneness, active, position, image |
-| `orders` | Customer name, phone, address, reference point, payment method, change, totals, status, payment status, courier |
-| `order_items` | Product name and price frozen at order time, optional second half, quantity, doneness, notes |
-| `order_events` | Change log of each order: placed, accepted, delivered, cancelled, paid, refunded |
-| `couriers`, `courier_invites` | Couriers who joined through a single-use invite link |
-| `customers` | Profile of a signed-in customer, used for order history and future loyalty programs |
-| `push_devices` | FCM tokens of owners, couriers and customers |
+| Table                         | Purpose                                                                                                                             |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `establishments`              | Owner (`firebase_uid`), `slug`, name, address, phone, CNPJ, colors, auto-accept, delivery fee, minimum order, online payments, logo |
+| `opening_hours`               | Weekly hours. `closes_at < opens_at` means the shop closes after midnight                                                           |
+| `absences`                    | Emergency closures. No orders are accepted while one is active                                                                      |
+| `products`                    | Name, description, ingredients, category, price, half-and-half, doneness, active, position, image                                   |
+| `orders`                      | Customer name, phone, address, reference point, payment method, change, totals, status, payment status, courier                     |
+| `order_items`                 | Product name and price frozen at order time, optional second half, quantity, doneness, notes                                        |
+| `order_events`                | Change log of each order: placed, accepted, delivered, cancelled, paid, refunded                                                    |
+| `couriers`, `courier_invites` | Couriers who joined through a single-use invite link                                                                                |
+| `customers`                   | Profile of a signed-in customer, used for order history and future loyalty programs                                                 |
+| `push_devices`                | FCM tokens of owners, couriers and customers                                                                                        |
 
 Every table also has a `<table>_history` copy (SCD Type 4). `GET /api/v1/audit` serves that history.
 
@@ -51,16 +51,23 @@ Uploads go straight from the browser to the bucket:
 2. It sends the file with `PUT` to that pre-signed URL.
 3. It saves the returned `key` as `image_key` on the product or `logo_key` on the establishment.
 
-| Provider | Variables |
-| --- | --- |
-| GCS | `STORAGE_PROVIDER=gcs`, `GCS_BUCKET`, optional `STORAGE_PUBLIC_BASE_URL` (CDN). The service account needs `roles/storage.objectAdmin` and `iam.serviceAccounts.signBlob` |
-| R2 | `STORAGE_PROVIDER=r2`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `STORAGE_PUBLIC_BASE_URL` (public bucket domain) |
+| Provider | Variables                                                                                                                                                                |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| GCS      | `STORAGE_PROVIDER=gcs`, `GCS_BUCKET`, optional `STORAGE_PUBLIC_BASE_URL` (CDN). The service account needs `roles/storage.objectAdmin` and `iam.serviceAccounts.signBlob` |
+| R2       | `STORAGE_PROVIDER=r2`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `STORAGE_PUBLIC_BASE_URL` (public bucket domain)                        |
 
 The bucket must allow CORS `PUT` with the `Content-Type` header from the UI origin. For GCS, put this in `cors.json`
 and run `gcloud storage buckets update gs://BUCKET --cors-file=cors.json`:
 
 ```json
-[{"origin": ["https://your-ui.example"], "method": ["PUT"], "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]
+[
+  {
+    "origin": ["https://your-ui.example"],
+    "method": ["PUT"],
+    "responseHeader": ["Content-Type"],
+    "maxAgeSeconds": 3600
+  }
+]
 ```
 
 For R2, add the same rule in the bucket's CORS settings in the Cloudflare dashboard.
