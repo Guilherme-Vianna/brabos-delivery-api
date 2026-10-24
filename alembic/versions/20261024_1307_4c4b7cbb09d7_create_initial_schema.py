@@ -159,7 +159,7 @@ def upgrade() -> None:
         sa.Column("phone", sa.String(length=20), nullable=False),
         sa.Column("cnpj", sa.String(length=14), nullable=True),
         sa.Column("primary_color", sa.String(length=7), server_default="#D62828", nullable=False),
-        sa.Column("accent_color", sa.String(length=7), server_default="#F77F00", nullable=False),
+        sa.Column("accent_color", sa.String(length=7), server_default="#FFB703", nullable=False),
         sa.Column("auto_accept", sa.Boolean(), server_default=sa.text("false"), nullable=False),
         sa.Column(
             "delivery_fee_enabled", sa.Boolean(), server_default=sa.text("false"), nullable=False

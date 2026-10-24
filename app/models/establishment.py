@@ -7,7 +7,7 @@ from app.models.base import PRICE, Base, TimestampMixin, UUIDv7PrimaryKeyMixin
 from app.models.history import versioned
 
 DEFAULT_PRIMARY_COLOR = "#D62828"
-DEFAULT_ACCENT_COLOR = "#F77F00"
+DEFAULT_ACCENT_COLOR = "#FFB703"
 
 
 @versioned

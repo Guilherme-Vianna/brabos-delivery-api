@@ -26,7 +26,7 @@ async def test_register_generates_slug_and_red_defaults(
     _, body = await register(client, identity, "owner-1", name="Brabos Burguér!")
 
     assert body["slug"] == "brabos-burguer"
-    assert (body["primary_color"], body["accent_color"]) == ("#D62828", "#F77F00")
+    assert (body["primary_color"], body["accent_color"]) == ("#D62828", "#FFB703")
     assert body["phone"] == "11988887777"
     assert (body["auto_accept"], body["delivery_fee_enabled"]) == (False, False)
 
