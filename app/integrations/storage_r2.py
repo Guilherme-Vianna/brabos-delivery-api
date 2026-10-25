@@ -1,10 +1,11 @@
 import asyncio
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import boto3
 from botocore.config import Config
 
 from app.core.storage import UPLOAD_EXPIRES_SECONDS, PresignedUpload
+from app.integrations.storage_views import ViewUrlCache
 from app.models.base import utc_now
 
 
@@ -15,7 +16,6 @@ class R2ObjectStorage:
         access_key_id: str,
         secret_access_key: str,
         bucket: str,
-        public_base_url: str,
     ) -> None:
         self._client = boto3.client(
             "s3",
@@ -26,7 +26,14 @@ class R2ObjectStorage:
             config=Config(signature_version="s3v4"),
         )
         self._bucket = bucket
-        self._public_base_url = public_base_url.rstrip("/")
+        self._views = ViewUrlCache(self._sign_view)
+
+    def _sign_view(self, key: str, expires_at: datetime) -> str:
+        return self._client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": self._bucket, "Key": key},
+            ExpiresIn=max(int((expires_at - utc_now()).total_seconds()), 1),
+        )
 
     async def presign_upload(self, key: str, content_type: str) -> PresignedUpload:
         url = await asyncio.to_thread(
@@ -42,8 +49,8 @@ class R2ObjectStorage:
             expires_at=utc_now() + timedelta(seconds=UPLOAD_EXPIRES_SECONDS),
         )
 
-    def public_url(self, key: str) -> str:
-        return f"{self._public_base_url}/{key}"
+    async def presign_view(self, key: str) -> str:
+        return await self._views.get(key)
 
     async def delete(self, key: str) -> None:
         await asyncio.to_thread(self._client.delete_object, Bucket=self._bucket, Key=key)

@@ -86,6 +86,10 @@ class FakePushNotifier:
         return [message.title for tokens, message in self.sent if token in tokens]
 
 
+def signed(key: str) -> str:
+    return f"https://cdn.test/{key}?signature=test"
+
+
 class FakeObjectStorage:
     def __init__(self) -> None:
         self.presigned: list[str] = []
@@ -100,8 +104,8 @@ class FakeObjectStorage:
             expires_at=utc_now() + timedelta(minutes=10),
         )
 
-    def public_url(self, key: str) -> str:
-        return f"https://cdn.test/{key}"
+    async def presign_view(self, key: str) -> str:
+        return signed(key)
 
     async def delete(self, key: str) -> None:
         self.deleted.append(key)

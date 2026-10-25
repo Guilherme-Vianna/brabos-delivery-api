@@ -23,9 +23,9 @@ Delivery API (FastAPI, three layers), Postgres, Firebase Auth + FCM, Redis, Clou
   `online_payments_enabled` (needs Stripe), `logo_key`, `next_order_number` (locked row → sequential numbers).
 - Opening hours: `opening_hours` weekday 0=Monday..6, `opens_at`/`closes_at` (`closes < opens` crosses midnight),
   replaced via `PUT /opening-hours`. Absences (emergency) close the shop while active. `services/common.is_within_hours`.
-- Products: name unique per establishment ignoring case, `price` `Numeric(10,2)` ↔ `schemas/types.Price`, category,
-  description, ingredients, `allows_half`, `asks_doneness`, `active`, `position`, `image_key`. Ordered products
-  cannot be deleted (409) — deactivate them; inactive ones are hidden publicly and not orderable.
+- Products: name unique per shop ignoring case, `price` `Numeric(10,2)` ↔ `schemas/types.Price`, category, description,
+  ingredients, `allows_half`, `asks_doneness`, `active`, `position`, `image_keys` (≤ 5, first = `image_url`; all in
+  `image_urls`), `featured` (≤ 3 per shop, else 409). Ordered ones can't be deleted (409): deactivate (hidden, not orderable).
 - Orders: only delivery. Status `placed → accepted → delivered`, or `cancelled`. Items snapshot names and
   `unit_price`; half-and-half charges the most expensive half; doneness required iff a half asks for it. Totals =
   subtotal + fee (if enabled). `change_for` only for cash and ≥ total. Closed shop → 409. `auto_accept` accepts on
@@ -41,7 +41,7 @@ Delivery API (FastAPI, three layers), Postgres, Firebase Auth + FCM, Redis, Clou
   last 30 days): sales exclude cancelled/pending/refunded; halves count 0.5 and split revenue.
 - Images (`core/storage.ObjectStorage`, `STORAGE_PROVIDER=none|gcs|r2`): `POST /uploads` presigns a PUT for
   `establishments/{id}/{kind}s/{uuid7}.{ext}`; `*_key` fields must use the own prefix; replaced keys are deleted
-  after commit; `api/media.present` fills `*_url`. Without storage: 503 / 422.
+  after commit; `api/media.present` fills `*_url` with signed GETs (private bucket, 1-2 h windows). No storage: 503 / 422.
 - Payments (`core/payments.PaymentGateway`, Stripe when `STRIPE_SECRET_KEY`): `online` orders are `pending` with a
   `checkout_url`; `POST /payments/webhook` marks paid (then notifies/auto-accepts) or expired (cancels); cancelling a
   paid order refunds. Without Stripe: `online` → 422, webhook → 503.
@@ -60,7 +60,7 @@ Delivery API (FastAPI, three layers), Postgres, Firebase Auth + FCM, Redis, Clou
 ```
 app/
   core/          config, database, auth, cache, exceptions, migrations, push, storage, payments (Protocols)
-  integrations/  firebase, fcm, redis, storage (+ storage_gcs, storage_r2), stripe
+  integrations/  firebase, fcm, redis, storage (+ _gcs, _r2, _views), stripe
   api/           deps, pagination, filters (PeriodDep), media (present), cache, health, v1/endpoints/*
   models/ schemas/ repositories/  establishment, opening_hours, absence, product, order(+items), order_event,
                  courier(+invite), customer, push_device

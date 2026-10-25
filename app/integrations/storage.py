@@ -10,13 +10,12 @@ def get_object_storage() -> ObjectStorage | None:
         case "gcs" if settings.gcs_bucket:
             from app.integrations.storage_gcs import GcsObjectStorage
 
-            return GcsObjectStorage(settings.gcs_bucket, settings.storage_public_base_url)
+            return GcsObjectStorage(settings.gcs_bucket)
         case "r2" if (
             settings.r2_account_id
             and settings.r2_access_key_id
             and settings.r2_secret_access_key
             and settings.r2_bucket
-            and settings.storage_public_base_url
         ):
             from app.integrations.storage_r2 import R2ObjectStorage
 
@@ -25,6 +24,5 @@ def get_object_storage() -> ObjectStorage | None:
                 settings.r2_access_key_id,
                 settings.r2_secret_access_key,
                 settings.r2_bucket,
-                settings.storage_public_base_url,
             )
     return None

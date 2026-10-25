@@ -86,6 +86,13 @@ def ensure_media_key(
         raise UnprocessableError("Image key does not belong to this establishment")
 
 
+def ensure_media_keys(
+    storage: ObjectStorage | None, establishment: Establishment, keys: list[str]
+) -> None:
+    for key in keys:
+        ensure_media_key(storage, establishment, key)
+
+
 async def discard_media(storage: ObjectStorage | None, key: str | None) -> None:
     if storage is None or key is None:
         return

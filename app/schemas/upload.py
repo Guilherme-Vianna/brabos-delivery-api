@@ -24,4 +24,4 @@ class UploadRead(BaseModel):
     method: str
     headers: dict[str, str]
     expires_at: datetime
-    public_url: str
+    view_url: str

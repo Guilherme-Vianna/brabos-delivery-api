@@ -28,5 +28,5 @@ class UploadService:
             method=upload.method,
             headers=upload.headers,
             expires_at=upload.expires_at,
-            public_url=self.storage.public_url(key),
+            view_url=await self.storage.presign_view(key),
         )

@@ -53,7 +53,6 @@ class Settings(BaseSettings):
     push_enabled: bool = False
 
     storage_provider: Literal["none", "gcs", "r2"] = "none"
-    storage_public_base_url: str | None = None
     gcs_bucket: str | None = None
     r2_account_id: str | None = None
     r2_access_key_id: str | None = None
@@ -78,7 +77,6 @@ class Settings(BaseSettings):
         "firebase_credentials_base64",
         "firebase_auth_emulator_host",
         "redis_url",
-        "storage_public_base_url",
         "gcs_bucket",
         "r2_account_id",
         "r2_access_key_id",

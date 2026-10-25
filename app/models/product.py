@@ -13,6 +13,7 @@ from sqlalchemy import (
     text,
     true,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import PRICE, Base, TimestampMixin, UUIDv7PrimaryKeyMixin
@@ -37,4 +38,7 @@ class Product(UUIDv7PrimaryKeyMixin, TimestampMixin, Base):
     asks_doneness: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     position: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
-    image_key: Mapped[str | None] = mapped_column(String(300))
+    featured: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    image_keys: Mapped[list[str]] = mapped_column(
+        ARRAY(String(300)), default=list, server_default=text("'{}'")
+    )

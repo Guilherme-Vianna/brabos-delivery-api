@@ -13,7 +13,7 @@ from app.api.deps import (
     PublicOpeningHoursServiceDep,
     StorageDep,
 )
-from app.api.media import present
+from app.api.media import present, present_all
 from app.api.pagination import PaginationDep
 from app.schemas.common import Page
 from app.schemas.establishment import (
@@ -36,14 +36,14 @@ async def register_establishment(
     service: EstablishmentServiceDep,
     storage: StorageDep,
 ) -> EstablishmentRead:
-    return present(EstablishmentRead, await service.register(user, data), storage)
+    return await present(EstablishmentRead, await service.register(user, data), storage)
 
 
 @router.get("/me", response_model=EstablishmentRead)
 async def get_my_establishment(
     user: CurrentUserDep, service: EstablishmentServiceDep, storage: StorageDep
 ) -> EstablishmentRead:
-    return present(EstablishmentRead, await service.get_for_user(user), storage)
+    return await present(EstablishmentRead, await service.get_for_user(user), storage)
 
 
 @router.patch("/me", response_model=EstablishmentRead)
@@ -53,7 +53,7 @@ async def update_my_establishment(
     service: EstablishmentServiceDep,
     storage: StorageDep,
 ) -> EstablishmentRead:
-    return present(EstablishmentRead, await service.update(user, data), storage)
+    return await present(EstablishmentRead, await service.update(user, data), storage)
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
@@ -67,7 +67,7 @@ async def get_establishment(
 ) -> EstablishmentPublicRead:
     establishment, open_status = await service.get_public(slug)
     absence = open_status.absence
-    return present(
+    return await present(
         EstablishmentPublicRead,
         establishment,
         storage,
@@ -86,7 +86,7 @@ async def list_establishment_products(
 ) -> Page[ProductPublicRead]:
     items, total = await service.list_public(slug, offset=pagination.offset, limit=pagination.limit)
     return Page[ProductPublicRead](
-        items=[present(ProductPublicRead, item, storage) for item in items],
+        items=await present_all(ProductPublicRead, items, storage),
         total=total,
         offset=pagination.offset,
         limit=pagination.limit,

@@ -25,7 +25,7 @@ database that compose creates.
 | `establishments`              | Owner (`firebase_uid`), `slug`, name, address, phone, CNPJ, colors, auto-accept, delivery fee, minimum order, online payments, logo |
 | `opening_hours`               | Weekly hours. `closes_at < opens_at` means the shop closes after midnight                                                           |
 | `absences`                    | Emergency closures. No orders are accepted while one is active                                                                      |
-| `products`                    | Name, description, ingredients, category, price, half-and-half, doneness, active, position, image                                   |
+| `products`                    | Name, description, ingredients, category, price, half-and-half, doneness, active, position, images, featured                        |
 | `orders`                      | Customer name, phone, address, reference point, payment method, change, totals, status, payment status, courier                     |
 | `order_items`                 | Product name and price frozen at order time, optional second half, quantity, doneness, notes                                        |
 | `order_events`                | Change log of each order: placed, accepted, delivered, cancelled, paid, refunded                                                    |
@@ -45,16 +45,20 @@ through `POST /api/v1/push-devices`.
 
 ### Product images (Google Cloud Storage or Cloudflare R2)
 
-Uploads go straight from the browser to the bucket:
+The bucket stays private. Uploads go straight from the browser to the bucket:
 
 1. The browser asks for a URL with `POST /api/v1/uploads` (`kind`, `content_type`, `size`).
 2. It sends the file with `PUT` to that pre-signed URL.
-3. It saves the returned `key` as `image_key` on the product or `logo_key` on the establishment.
+3. It saves the returned `key` in `image_keys` (up to 5) on the product or `logo_key` on the establishment.
 
-| Provider | Variables                                                                                                                                                                |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| GCS      | `STORAGE_PROVIDER=gcs`, `GCS_BUCKET`, optional `STORAGE_PUBLIC_BASE_URL` (CDN). The service account needs `roles/storage.objectAdmin` and `iam.serviceAccounts.signBlob` |
-| R2       | `STORAGE_PROVIDER=r2`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `STORAGE_PUBLIC_BASE_URL` (public bucket domain)                        |
+Images are read through pre-signed `GET` URLs: every `image_url`, `image_urls` and `logo_url` in the responses (and
+`view_url` in the upload response) is signed on the fly. A URL is valid for 1 to 2 hours and is the same for every
+request within the same hour, so browsers can cache the image. Clients must store the `key`, never these URLs.
+
+| Provider | Variables                                                                                                                                                                         |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GCS      | `STORAGE_PROVIDER=gcs`, `GCS_BUCKET`. The service account needs `roles/storage.objectAdmin` and `iam.serviceAccounts.signBlob` (`roles/iam.serviceAccountTokenCreator` on itself) |
+| R2       | `STORAGE_PROVIDER=r2`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`                                                                                   |
 
 The bucket must allow CORS `PUT` with the `Content-Type` header from the UI origin. For GCS, put this in `cors.json`
 and run `gcloud storage buckets update gs://BUCKET --cors-file=cors.json`:
@@ -90,6 +94,5 @@ deployed to Cloud Run in `southamerica-east1`. Repository settings:
 
 - **Secrets:** `GCP_CREDENTIALS`, `DATABASE_URL`, `REDIS_URL`, `FIREBASE_CREDENTIALS_BASE64`,
   `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
-- **Variables:** `PUBLIC_APP_URL`, `PUSH_ENABLED`, `STORAGE_PROVIDER`, `STORAGE_PUBLIC_BASE_URL`, `GCS_BUCKET`,
-  `R2_ACCOUNT_ID`, `R2_BUCKET`, `CORS_ORIGINS`, `CLOUD_RUN_SERVICE`, `GCP_SERVICE_ACCOUNT` and the other optional
+- **Variables:** `PUBLIC_APP_URL`, `PUSH_ENABLED`, `STORAGE_PROVIDER`, `GCS_BUCKET`, `R2_ACCOUNT_ID`, `R2_BUCKET`, `CORS_ORIGINS`, `CLOUD_RUN_SERVICE`, `GCP_SERVICE_ACCOUNT` and the other optional
   values in the workflow.

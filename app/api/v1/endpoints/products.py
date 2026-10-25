@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import CatalogServiceDep, CurrentUserDep, StorageDep
-from app.api.media import present
+from app.api.media import present, present_all
 from app.api.pagination import PaginationDep
 from app.schemas.common import Page
 from app.schemas.product import ProductCreate, ProductRead, ProductUpdate
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/products", tags=["products"])
 async def create_product(
     data: ProductCreate, user: CurrentUserDep, service: CatalogServiceDep, storage: StorageDep
 ) -> ProductRead:
-    return present(ProductRead, await service.create(user, data), storage)
+    return await present(ProductRead, await service.create(user, data), storage)
 
 
 @router.get("", response_model=Page[ProductRead])
@@ -32,7 +32,7 @@ async def list_products(
         user, offset=pagination.offset, limit=pagination.limit, search=search, active=active
     )
     return Page[ProductRead](
-        items=[present(ProductRead, item, storage) for item in items],
+        items=await present_all(ProductRead, items, storage),
         total=total,
         offset=pagination.offset,
         limit=pagination.limit,
@@ -43,7 +43,7 @@ async def list_products(
 async def get_product(
     product_id: UUID, user: CurrentUserDep, service: CatalogServiceDep, storage: StorageDep
 ) -> ProductRead:
-    return present(ProductRead, await service.get(user, product_id), storage)
+    return await present(ProductRead, await service.get(user, product_id), storage)
 
 
 @router.patch("/{product_id}", response_model=ProductRead)
@@ -54,7 +54,7 @@ async def update_product(
     service: CatalogServiceDep,
     storage: StorageDep,
 ) -> ProductRead:
-    return present(ProductRead, await service.update(user, product_id, data), storage)
+    return await present(ProductRead, await service.update(user, product_id, data), storage)
 
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)

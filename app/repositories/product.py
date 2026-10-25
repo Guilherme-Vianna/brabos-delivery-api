@@ -17,6 +17,14 @@ class ProductRepository(BaseRepository[Product]):
         )
         return await self.session.scalar(stmt.limit(1))
 
+    async def count_featured(self, establishment_id: UUID, *, exclude: UUID | None = None) -> int:
+        stmt = select(func.count(Product.id)).where(
+            Product.establishment_id == establishment_id, Product.featured.is_(True)
+        )
+        if exclude is not None:
+            stmt = stmt.where(Product.id != exclude)
+        return await self.session.scalar(stmt) or 0
+
     async def find_for_establishment(
         self, establishment_id: UUID, product_ids: Iterable[UUID]
     ) -> dict[UUID, Product]:
